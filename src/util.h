@@ -25,7 +25,7 @@ DayForecast* calculateDayForecasts(OpenWeatherMapForecastData *forecasts) {
   uint8_t weekday = getCurrentWeekday();
   static DayForecast dayForecasts[NUMBER_OF_DAY_FORECASTS];
   for (int i = 0; i < NUMBER_OF_DAY_FORECASTS; i++) {
-    dayForecasts[i] = {200.0, -200.0, 0, 23};
+    dayForecasts[i] = {200.0, -200.0, 0, 25};
   }
   int k = -1;
   int currentForecastDay = -1;
@@ -35,11 +35,13 @@ DayForecast* calculateDayForecasts(OpenWeatherMapForecastData *forecasts) {
     time_t forecastTimeUtc = forecast.observationTime;
     struct tm *forecastLocalTime = localtime(&forecastTimeUtc);
 
+#ifdef SKIP_TODAYS_FORECAST
     if (weekday == forecastLocalTime->tm_wday) {
       strftime(timestampBuffer, sizeof(timestampBuffer), SYSTEM_TIMESTAMP_FORMAT, forecastLocalTime);
       log_d("Skipping forecast for today %s", timestampBuffer);
       continue;
     }
+#endif
 
     if (forecastLocalTime->tm_wday != currentForecastDay) {
       currentForecastDay = forecastLocalTime->tm_wday;

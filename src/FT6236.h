@@ -60,7 +60,7 @@ class FT6236
 public:
   FT6236(uint16_t width = 480, uint16_t height = 320);
   void debug(void);
-  boolean begin(uint8_t thresh = FT6236_DEFAULT_THRESHOLD, int8_t sda = -1, int8_t scl = -1);
+  boolean begin(uint8_t thresh = FT6236_DEFAULT_THRESHOLD, int8_t sda = -1, int8_t scl = -1, int8_t irq = -1);
   uint8_t touched(void);
   TS_Point getPoint(uint8_t n = 0);
   // Helper functions to make the touch display aware
@@ -69,10 +69,14 @@ public:
 private:
   void writeRegister8(uint8_t reg, uint8_t val);
   uint8_t readRegister8(uint8_t reg);
-
   void readData(void);
+  static void irqHandler(void* arg);
+
   uint8_t touches;
   uint16_t touchX[2], touchY[2], touchID[2];
+  int8_t irqPin;
+  bool irqTouched;
+
   // Make touch rotation aware:
   uint8_t _rotation = 0;
   uint16_t _touch_width = 0;

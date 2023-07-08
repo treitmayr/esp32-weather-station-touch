@@ -1,8 +1,14 @@
-# Color Kit Grande Weather Station
+# Weather Station for Color Kit Grande and ESP32 TouchDown
 
-[![Build Status](https://github.com/ThingPulse/esp32-weather-station-touch/actions/workflows/main.yml/badge.svg)](https://github.com/ThingPulse/esp32-weather-station-touch/actions)
+Weather station application for the [ThingPulse Color Kit Grande](https://thingpulse.com/product/esp32-wifi-color-display-kit-grande/) and the [ESP32 TouchDown](https://github.com/DustinWatts/esp32-touchdown).
 
-Weather station application for the [ThingPulse Color Kit Grande](https://thingpulse.com/product/esp32-wifi-color-display-kit-grande/).
+## Exemplary Variations
+
+### ESP32 TouchDown (landscape mode)
+
+[![ESP32 TouchDown with weather station application](assets/ESP32-TouchDown.jpg)](https://github.com/DustinWatts/esp32-touchdown)
+
+### Color Kit Grande (portrait mode)
 
 [![Color Kit Grande with sample application: weather station](https://thingpulse.com/wp-content/uploads/2022/10/ThingPulse-Color-Kit-Grand-with-sample-application.jpg)](https://thingpulse.com/product/esp32-wifi-color-display-kit-grande/)
 

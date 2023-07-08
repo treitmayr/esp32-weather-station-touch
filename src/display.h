@@ -11,6 +11,7 @@
 // The library defines the type "setup_t" as a struct
 // Calling tft.getSetup(user) populates it with the settings
 setup_t user;
+static bool tftAwake = false;
 
 uint8_t readRegister8(uint8_t reg);
 
@@ -32,10 +33,15 @@ void initTft(TFT_eSPI *tft) {
   ledcWrite(0, TFT_LED_BRIGHTNESS);
 #endif
   tft->fillScreen(TFT_BLACK);
+  tftAwake = true;
 }
 
 void initTouchScreen(FT6236 *ts) {
-  if (ts->begin(TOUCH_SENSITIVITY, TOUCH_SDA, TOUCH_SCL)) {
+  int8_t touchIrq = -1;
+#ifdef TOUCH_IRQ
+  touchIrq = TOUCH_IRQ;
+#endif
+  if (ts->begin(TOUCH_SENSITIVITY, TOUCH_SDA, TOUCH_SCL, touchIrq)) {
     log_i("Capacitive touch started.");
   } else {
     log_e("Failed to start the capacitive touchscreen.");
@@ -73,7 +79,7 @@ void logDisplayDebugInfo(TFT_eSPI *tft) {
   log_i("Vendor ID:         0x%02x", readRegister8(FT6236_REG_VENDID));
   log_i("Chip ID:           0x%02x", readRegister8(FT6236_REG_CHIPID));
   log_i("Firmware version:  %d", readRegister8(FT6236_REG_FIRMVERS));
-  log_i("Point rate:        %dHz", readRegister8(FT6236_REG_POINTRATE));
+  log_i("Point rate:        %d Hz", readRegister8(FT6236_REG_POINTRATE));
   log_i("Sensitivity:       %d (threshold)", readRegister8(FT6236_REG_THRESHHOLD));
 }
 
@@ -88,4 +94,50 @@ uint8_t readRegister8(uint8_t reg) {
   x = Wire.read();
 
   return x;
+}
+
+void fadeBacklight(int32_t start, int32_t end, uint32_t duration) {
+  const int32_t steps = 10;
+  int32_t dly = duration / steps;
+  const int32_t incr = (end - start) / steps;
+  int32_t level = start;
+
+  for (uint32_t step = 0; step <= steps;) {
+    ledcWrite(0, level);
+    delay(dly);
+    level += incr;
+    step++;
+    if (step == steps) {
+      level = end;
+      dly = 0;
+    }
+  }
+}
+
+void tftFadeOut(void) {
+  fadeBacklight(TFT_LED_BRIGHTNESS, 0, 500);
+}
+
+void tftFadeIn(void) {
+  fadeBacklight(0, TFT_LED_BRIGHTNESS, 300);
+}
+
+void tftSleepIn(TFT_eSPI *tft) {
+  tftFadeOut();
+  tft->writecommand(TFT_SLPIN);
+  tft->writedata(0x08);
+  tftAwake = false;
+}
+
+void tftSleepOut(TFT_eSPI *tft) {
+  tft->writecommand(TFT_SLPOUT);
+  tft->writedata(0x08);
+  // make sure pixels are redrawn to prevent flash
+  delay(150);
+  tftFadeIn();
+  tftAwake = true;
+}
+
+bool isTftAwake() {
+  return tftAwake;
 }

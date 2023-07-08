@@ -33,10 +33,11 @@ FT6236::FT6236(uint16_t width, uint16_t height)
     touches = 0;
     _touch_width = width;
     _touch_height = height;
+    irqPin = -1;
 }
 
 /* Start I2C and check if the FT6236 is found. */
-boolean FT6236::begin(uint8_t thresh, int8_t sda, int8_t scl)
+boolean FT6236::begin(uint8_t thresh, int8_t sda, int8_t scl, int8_t irq)
 {
     if (sda != -1 && scl != -1)
     {
@@ -64,7 +65,18 @@ boolean FT6236::begin(uint8_t thresh, int8_t sda, int8_t scl)
         return false;
     }
 
+    irqPin = irq;
+    if (irqPin >= 0)
+    {
+        attachInterruptArg(irqPin, FT6236::irqHandler, (void*)this, RISING);
+    }
+
     return true;
+}
+
+void IRAM_ATTR FT6236::irqHandler(void* arg)
+{
+    static_cast<FT6236*>(arg)->irqTouched = true;
 }
 
 void FT6236::setRotation(uint8_t rotation)
@@ -75,10 +87,19 @@ void FT6236::setRotation(uint8_t rotation)
 /* Returns the number of touches */
 uint8_t FT6236::touched(void)
 {
-    uint8_t n = readRegister8(FT6236_REG_NUMTOUCHES);
-    if (n > 2)
+    uint8_t n = 0;
+    if (irqTouched || (irqPin < 0))
     {
-        n = 0;
+        n = readRegister8(FT6236_REG_NUMTOUCHES);
+        if (irqTouched && n == 0)
+        {
+            n = 1;   // we know there was a touch event
+        }
+        else if (n > 2)
+        {
+            n = 0;   // do not handle more than double-tap
+        }
+        irqTouched = false;
     }
     return n;
 }
@@ -109,7 +130,7 @@ void FT6236::readData(void)
     for (uint8_t i = 0; i < 16; i++)
         i2cdat[i] = Wire.read();
 
-    touches = i2cdat[0x02];
+    touches = i2cdat[FT6236_REG_NUMTOUCHES];
     if ((touches > 2) || (touches == 0))
     {
         touches = 0;
