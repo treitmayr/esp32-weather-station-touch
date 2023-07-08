@@ -27,7 +27,7 @@ bool IS_METRIC = true;
 
 // OpenWeatherMap Settings
 // Sign up here to get an API key: https://docs.thingpulse.com/how-tos/openweathermap-key/
-const String OPEN_WEATHER_MAP_API_KEY = "7c7d12b43186133729e0c1bf7d49ef76";
+const String OPEN_WEATHER_MAP_API_KEY = "<your-api-key>";
 
 /*
 Go to https://openweathermap.org/find?q= and search for a location. Go through the
