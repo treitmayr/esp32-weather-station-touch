@@ -49,13 +49,15 @@ OpenWeatherMapForecastData forecasts[NUMBER_OF_FORECASTS];
 // Function prototypes (declarations)
 // ----------------------------------------------------------------------------
 static void drawProgress(const char *text, int8_t percentage);
+static void clearTimeAndDate();
 static void drawTimeAndDate();
 static String getWeatherIconName(uint16_t id, bool today);
 static void initJpegDecoder();
 static void initOpenFontRender();
 static bool pushImageToTft(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bitmap);
 static void syncTime();
-static void repaint();
+static void clearWeather();
+static void repaintWeather();
 static void updateData(boolean updateProgressBar);
 
 
@@ -107,20 +109,25 @@ void loop(void) {
              (currentMillis > lastTouchedTime + TFT_SLEEP_DELAY_SECONDS * 1000)) {
       log_i("TFT going to sleep");
       tftSleepIn(&tft);
+      clearTimeAndDate();
+  }
+  if (lastUpdateMillis > 0 &&
+      (currentMillis - lastUpdateMillis) > updateIntervalMillis) {
+    lastUpdateMillis = 0;    // force redraw
+    clearWeather();
   }
 #endif
 
   if (isTftAwake()) {
     dly = 1000;
+    drawTimeAndDate();
     // update if
     // - never (successfully) updated before OR
     // - last sync too far back
     if (lastTimeSyncMillis == 0 ||
         lastUpdateMillis == 0 ||
         (currentMillis - lastUpdateMillis) > updateIntervalMillis) {
-      repaint();
-    } else {
-      drawTimeAndDate();
+      repaintWeather();
     }
   }
   // make sure to not extend the interval by drawing time
@@ -369,6 +376,10 @@ static void drawVertSeparator(uint16_t x, uint16_t y, uint16_t height) {
   tft.drawFastVLine(x, y + padding, height - 2 * padding, 0x4228);
 }
 
+static void clearTimeAndDate() {
+  tft.fillRect(0, 5, tft.width(), timeSprite.height(), TFT_BLACK);
+}
+
 static void drawTimeAndDate() {
   static uint32_t timeOffsetX = 0;
   int16_t centerSpriteWidth = timeSprite.width() / 2;
@@ -505,12 +516,15 @@ static void repaint_original_unused() {
 }
 #endif
 
-static void repaint() {
+static void clearWeather() {
+  tft.fillRect(0, 91, tft.width(), tft.height(), TFT_BLACK);
+}
+
+static void repaintWeather() {
   wakeModemSleep();
 
-  tft.fillRect(0, 91, tft.width(), tft.height(), TFT_BLACK);
+  clearWeather();
 
-  drawTimeAndDate();
   drawHorizSeparator(90);
 
   updateData(false);
@@ -532,7 +546,7 @@ static void repaint() {
     drawAstro(220, centerWidth, tft.width());
   }
 
-  delay(100);
+  delay(100);   // try to prevent crippled serial output
   setModemSleep();
 }
 

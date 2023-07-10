@@ -11,7 +11,7 @@
 // The library defines the type "setup_t" as a struct
 // Calling tft.getSetup(user) populates it with the settings
 setup_t user;
-static bool tftAwake = false;
+bool tftAwake = false;
 
 uint8_t readRegister8(uint8_t reg);
 
