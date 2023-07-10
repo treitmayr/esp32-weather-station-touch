@@ -68,7 +68,9 @@ boolean FT6236::begin(uint8_t thresh, int8_t sda, int8_t scl, int8_t irq)
     irqPin = irq;
     if (irqPin >= 0)
     {
-        attachInterruptArg(irqPin, FT6236::irqHandler, (void*)this, RISING);
+        // Defaults to "interrupt trigger mode" which means that for any
+        // change in the touch date, an interrupt will be retriggered.
+        attachInterruptArg(irqPin, FT6236::irqHandler, (void*)this, FALLING);
     }
 
     return true;
