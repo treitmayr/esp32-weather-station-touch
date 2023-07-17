@@ -10,6 +10,7 @@ This fork provides the following added features compared to the upstream version
 * **Automatic Screen Off:** The screen can be configured to turn off after a specific time, and turn back on as soon as the display is touched. Transitions between on and off are implemented in a smooth way.
 * **Today's Temperature Trend:** In landscape mode, the wind rose is replaced by a tempature trend for the next 15 hours.
 * **ESP32 TouchDown:** This target hardware is now directly supported via a separate build environment for PlatformIO.
+* **SNTP Server via DHCP:** The SNTP server (responsible for delivering the current date and time) will be obtained via DHCP, if supported.
 
 Fixes to the upstream version:
 
