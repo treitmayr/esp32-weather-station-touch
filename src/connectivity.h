@@ -14,13 +14,6 @@ extern "C" {
 #include "settings.h"
 
 static void startWiFi() {
-  const uint32_t dly = 200;   // [ms]
-  const uint16_t max_retry = 30 * 1000 / dly;
-  uint16_t wifi_try = 0;
-  uint8_t status;
-
-  WiFi.setScanMethod(WIFI_FAST_SCAN);   // should be the default anyway
-
   if (SSID == nullptr || WIFI_PWD == nullptr) {
     wifi_config_t current_conf;
     if (WiFi.enableSTA(true) && esp_wifi_get_config((wifi_interface_t)ESP_IF_WIFI_STA, &current_conf) == ESP_OK) {
@@ -34,8 +27,15 @@ static void startWiFi() {
   }
 }
 
-void waitWifiStarted() {
+void waitWifiStarted(uint16_t max_delay_sec) {
+  const static uint32_t dly = 200;   // [ms]
+  uint16_t retry = max_delay_sec * 1000 / dly;
+
   while (WiFi.status() != WL_CONNECTED) {
+    if (retry == 0) {
+      esp_restart();
+    }
+    retry--;
     log_i(".");
     delay(200);
   }

@@ -34,7 +34,6 @@ GfxUi ui = GfxUi(&tft, &ofr);
 
 // time management variables
 int updateIntervalMillis = UPDATE_INTERVAL_MINUTES * 60 * 1000;
-unsigned long lastTimeSyncMillis = 0;
 unsigned long lastUpdateMillis = 0;
 static unsigned long timeUpdate = millis();
 static unsigned long lastTouchedTime = millis();
@@ -55,7 +54,6 @@ static String getWeatherIconName(uint16_t id, bool today);
 static void initJpegDecoder();
 static void initOpenFontRender();
 static bool pushImageToTft(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t *bitmap);
-static void syncTime();
 static void clearWeather();
 static void repaintWeather();
 static void updateData(boolean updateProgressBar);
@@ -70,6 +68,7 @@ void setup(void) {
 
   logBanner();
   logMemoryStats();
+  initTime();
 
   startWiFi();
 
@@ -83,8 +82,8 @@ void setup(void) {
   initFileSystem();
   initOpenFontRender();
 
-  waitWifiStarted();
-  syncTime();
+  waitWifiStarted(20);
+  (void)syncTime(TIMEZONE);
 
   unsigned long currentMillis = millis();
   timeUpdate = currentMillis;
@@ -102,6 +101,7 @@ void loop(void) {
     lastTouchedTime = currentMillis;
     log_i("TFT touched");
     if (!isTftAwake()) {
+      drawTimeAndDate();
       tftSleepOut(&tft);
       log_i("TFT woke up");
     }
@@ -124,8 +124,7 @@ void loop(void) {
     // update if
     // - never (successfully) updated before OR
     // - last sync too far back
-    if (lastTimeSyncMillis == 0 ||
-        lastUpdateMillis == 0 ||
+    if (lastUpdateMillis == 0 ||
         (currentMillis - lastUpdateMillis) > updateIntervalMillis) {
       repaintWeather();
     }
@@ -469,14 +468,6 @@ static bool pushImageToTft(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_
 
   // Return 1 to decode next block
   return 1;
-}
-
-static void syncTime() {
-  if (initTime()) {
-    lastTimeSyncMillis = millis();
-    setTimezone(TIMEZONE);
-    log_i("Current local time: %s", getCurrentTimestamp(SYSTEM_TIMESTAMP_FORMAT).c_str());
-  }
 }
 
 #if 0

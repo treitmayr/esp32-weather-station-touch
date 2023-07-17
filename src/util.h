@@ -3,6 +3,9 @@
 
 #pragma once
 
+#define SNTP_GET_SERVERS_FROM_DHCP 1
+#include <sntp.h>
+
 #include "time.h"
 #include "settings.h"
 
@@ -79,12 +82,27 @@ String getCurrentTimestamp(const char* format) {
   return String(timestampBuffer);
 }
 
-boolean initTime() {
+void initTime() {
+  sntp_servermode_dhcp(1);
+}
+
+boolean syncTime(const char* timezone) {
   struct tm timeinfo;
 
+  configTzTime(TIMEZONE, "pool.ntp.org");
+
+  for (uint8_t i = 0; i < 3; i++) {
+    const ip_addr_t *srv = sntp_getserver(i);
+    if (srv != NULL) {
+      uint32_t addr_num = srv->u_addr.ip4.addr;
+      if (addr_num != 0) {
+        IPAddress addr(addr_num);
+        log_i("SNTP server #%u: %s", i, addr.toString().c_str());
+      }
+    }
+  }
+
   log_i("Synchronizing time.");
-  // Connect to NTP server with 0 TZ offset, call setTimezone() later
-  configTime(0, 0, "pool.ntp.org");
   if (!getLocalTime(&timeinfo)) {
     log_e("Failed to obtain time.");
     return false;
@@ -92,6 +110,7 @@ boolean initTime() {
   log_i("UTC time: %s", getCurrentTimestamp(SYSTEM_TIMESTAMP_FORMAT).c_str());
   return true;
 }
+
 
 void logBanner() {
   log_i("**********************************************");
